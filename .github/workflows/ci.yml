@@ -1,0 +1,68 @@
+# Workflow name
+name: CI Pipeline
+
+# 触发条件
+on:
+  # 当推送到 main 分支
+  push:
+    branches: ["main"]
+  # 或者有人提 PR
+  pull_request:
+
+jobs:
+  # 定义一个 job，名字叫 build
+  build:
+    # 在 GitHub 的 Linux runner 上跑
+    runs-on: ubuntu-latest
+
+    steps:
+      # 第一步：拉取仓库代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: 后端 (.NET) Build + Test
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore .NET dependencies
+        run: dotnet restore StockApi/StockApi.csproj
+
+      - name: Build .NET backend
+        run: dotnet build StockApi/StockApi.csproj --no-restore --configuration Release
+
+      - name: Run .NET backend tests
+        run: dotnet test StockApi.Tests/StockApi.Tests.csproj --logger "trx;LogFileName=test_results.trx" --results-directory ./TestResults
+
+      - name: Upload backend test report
+        uses: actions/upload-artifact@v3
+        with:
+          name: backend-test-report
+          path: TestResults/test_results.trx
+
+      # Step 3: 前端 (React) Build + Test
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install frontend dependencies
+        run: |
+          cd stock-frontend
+          npm install
+
+      - name: Run frontend tests
+        run: |
+          cd stock-frontend
+          npm test -- --watchAll=false --json --outputFile=jest-results.json
+
+      - name: Upload frontend test report
+        uses: actions/upload-artifact@v3
+        with:
+          name: frontend-test-report
+          path: stock-frontend/jest-results.json
+
+      # 第四步：构建 Docker 镜像
+      - name: Build Docker images
+        run: docker-compose build

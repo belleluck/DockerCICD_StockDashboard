@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./StockApi
+    ports:
+      - "5075:8080"
+
+  frontend:
+    build: ./stock-frontend
+    ports:
+      - "3000:80"
