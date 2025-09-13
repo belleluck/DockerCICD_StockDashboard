@@ -18,11 +18,11 @@ jobs:
     steps:
       # 第一步：拉取仓库代码
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v5
 
       # Step 2: 后端 (.NET) Build + Test
       - name: Setup .NET
-        uses: actions/setup-dotnet@v3
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 8.0.x
 
@@ -36,14 +36,15 @@ jobs:
         run: dotnet test StockApi.Tests/StockApi.Tests.csproj --logger "trx;LogFileName=test_results.trx" --results-directory ./TestResults
 
       - name: Upload backend test report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: backend-test-report
           path: TestResults/test_results.trx
+          retention-days: 14
 
       # Step 3: 前端 (React) Build + Test
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v5
         with:
           node-version: 18
 
@@ -58,10 +59,11 @@ jobs:
           npm test -- --watchAll=false --json --outputFile=jest-results.json
 
       - name: Upload frontend test report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: frontend-test-report
           path: stock-frontend/jest-results.json
+          retention-days: 14
 
       # 第四步：构建 Docker 镜像
       - name: Build Docker images
